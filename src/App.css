@@ -1,5 +1,10 @@
+body {
+  padding: 20px;
+}
+
 .App {
   text-align: center;
+  padding: 20px;
 }
 
 .App-logo {
@@ -25,4 +30,18 @@
 @keyframes App-logo-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+
+.is-correct {
+  color: green;
+}
+
+.is-incorrect {
+  color: red;
+}
+
+.active-word {
+  background-color: rgb(127, 207, 127);
+  display: inline-block;
 }

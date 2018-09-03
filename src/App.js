@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import Text from './Text';
 
 class App extends Component {
   constructor(props) {
@@ -8,79 +9,93 @@ class App extends Component {
 
     this.state = {
       original: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Memini vero, inquam; Qua ex cognitione facilior facta est investigatio rerum occultissimarum.',
-      characters: [],
-      text: '',
+      displayText: '',
+      words: [],
       value: '',
-      correct: [],
-      incorrect: [],
-      index: 0,
-      valueIndex: 0,
-      backspaceTriggered: false,
-      debug: {
-        next: ''
-      }
+      activeWordIndex: 0,
+      pastLastCharacter: false,
+      activeLetterIndex: 0,
+      spaceTriggered: false,
+      backspaceTriggered: false
     }
 
     this.handleTyping = this.handleTyping.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.handleBackspace = this.handleBackspace.bind(this);
   }
 
   componentDidMount() {
-    let { original, characters, debug, index } = this.state;
-    characters = original.split('');
+    const { original, activeWordIndex } = this.state;
+    let splitByWords = original.split(' ');
+
+    let displayText = this.highlightWordAtIndex(activeWordIndex);
 
     this.setState({
-      characters,
-      text: original,
-      debug: {...debug, next: characters[index] }
+      displayText,
+      words: splitByWords
     })
   }
 
-  handleTyping(e) {
-    const value = e.target.value;
-    const { characters, index, backspaceTriggered, text, debug, correct, incorrect } = this.state;
+  highlightWordAtIndex(index = 0) {
+    const { original } = this.state; 
+    let splitWords = original.split(' ');
 
-    this.setState({
-      value,
-      index: index + 1,
-      debug: { ...debug, next: characters[index + 1] }
-    });
-
+    splitWords[index] = `<span class="active-word">${splitWords[index]}</span>`;
+    return splitWords.join(' ');
   }
 
-  handleKeyPress(e) {
-    const { index, backspaceTriggered, characters, debug, text, value } = this.state;
-    const isBackspace = (e.key === 'Backspace');
 
-    let newIndex = isBackspace ? ((index - 1) <= 0 ? 0 : index - 2) : index;
-    
-    if ( value.trim().length === 0 ) {
-      newIndex = 0;
-    }
+  handleTyping(e) {
+    let value = e.target.value;
 
-    let correct = [];
+    let { words, activeLetterIndex, activeWordIndex, displayText, spaceTriggered, pastLastCharacter } = this.state;
+    let activeWord = words[activeWordIndex];
 
-    if ( text[index] === value[index] ) {
-      correct.push(value[index]);
+    let lastLetterOfActiveWord = activeWord.substr(activeWord.length - 1);
+    let lastLetterOfValue = value.substr(value.length - 1);
+
+    let isLastLetterOfWord = (value[activeLetterIndex] === activeWord[activeLetterIndex])
+                              && (lastLetterOfActiveWord === lastLetterOfValue);
+
+    if ( pastLastCharacter && spaceTriggered ) {
+      activeLetterIndex = 0; 
+      activeWordIndex++;
+      spaceTriggered = false;
+      value = '';
+      displayText = this.highlightWordAtIndex(activeWordIndex);
+    } else {
+      if (value[activeLetterIndex] === activeWord[activeLetterIndex]) {
+        pastLastCharacter = isLastLetterOfWord;
+        activeLetterIndex++;
+      }
     }
 
     this.setState({ 
-      backspaceTriggered: isBackspace,
-      index: newIndex,
-      debug: { ...debug, next: characters[newIndex] },
-      correct: [...this.state.correct, ...correct]
+      value,
+      activeLetterIndex,
+      activeWordIndex,
+      displayText,
+      spaceTriggered,
+      pastLastCharacter
     });
+  }
+  
+  handleBackspace(e) {
+    const isBackspace = e.key === 'Backspace';
+    const isSpace = e.key === ' ';
+
+    if ( isBackspace ) {
+      if ( !e.target.value.trim() ) e.preventDefault();
+    } else if ( isSpace ) {
+      if ( !e.target.value.trim() ) e.preventDefault();
+      this.setState({ spaceTriggered: true })
+    }
   }
 
   render() {
     return (
       <React.Fragment>
-        <div style={{width: 250}}>{this.state.text}</div>
-        <textarea onKeyUp={this.handleKeyPress} onChange={this.handleTyping} value={this.state.value} />
-        <div>
-          <h3>debug:</h3>
-          <p>Next: {this.state.debug.next}</p>
-        </div>
+        <Text text={this.state.displayText} />
+        <textarea onKeyDown={this.handleBackspace} onChange={this.handleTyping} value={this.state.value} />
       </React.Fragment>
     )
   }
