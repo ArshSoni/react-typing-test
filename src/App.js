@@ -8,7 +8,7 @@ class App extends Component {
     super(props);
 
     this.state = {
-      original: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Memini vero, inquam; Qua ex cognitione facilior facta est investigatio rerum occultissimarum.',
+      original: 'olor Lorem ipsum dolor sit amet, consectetur adipiscing elit. Memini vero, inquam; Qua ex cognitione facilior facta est investigatio rerum occultissimarum.',
       displayText: '',
       words: [],
       value: '',
@@ -64,8 +64,14 @@ class App extends Component {
       displayText = this.highlightWordAtIndex(activeWordIndex);
     } else {
       if (value[activeLetterIndex] === activeWord[activeLetterIndex]) {
+        console.log('right letter')
+        // debugger;
+        displayText = this.highlightCharacter(displayText, activeLetterIndex, true);
         pastLastCharacter = isLastLetterOfWord;
         activeLetterIndex++;
+      } else {
+        console.log('wrong letter');
+        displayText = this.highlightCharacter(displayText, activeLetterIndex, false)
       }
     }
 
@@ -75,7 +81,8 @@ class App extends Component {
       activeWordIndex,
       displayText,
       spaceTriggered,
-      pastLastCharacter
+      pastLastCharacter,
+      words: this.state.original.split(' ')
     });
   }
   
@@ -89,6 +96,15 @@ class App extends Component {
       if ( !e.target.value.trim() ) e.preventDefault();
       this.setState({ spaceTriggered: true })
     }
+  }
+
+  highlightCharacter(text = this.state.original, letterIndex, correct = false) {
+    let { words, activeWordIndex } = this.state; 
+    let activeWord = words[activeWordIndex];
+
+    activeWord = activeWord.replace(activeWord[letterIndex], `<span class="is-${!correct ? 'in' : ''}correct">${activeWord[letterIndex]}</span>`);
+    words[activeWordIndex] = `<span class="active-word">${activeWord}</span>`;
+    return words.join(' ');
   }
 
   render() {
