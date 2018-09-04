@@ -13,6 +13,7 @@ class App extends Component {
       words: [],
       value: '',
       activeWordIndex: 0,
+      wordCounter: 0,
       pastLastCharacter: false,
       activeLetterIndex: 0,
       spaceTriggered: false,
@@ -26,11 +27,12 @@ class App extends Component {
   componentDidMount() {
     const { original, activeWordIndex } = this.state;
     let splitByWords = original.split(' ');
-
+    let lastWord = splitByWords[splitByWords.length - 1];
     let displayText = this.highlightWordAtIndex(activeWordIndex);
 
     this.setState({
       displayText,
+      lastWord,
       words: splitByWords
     })
   }
@@ -47,21 +49,29 @@ class App extends Component {
   handleTyping(e) {
     let value = e.target.value;
 
-    let { words, activeLetterIndex, activeWordIndex, displayText, spaceTriggered, pastLastCharacter } = this.state;
+    let { words, activeLetterIndex, activeWordIndex, displayText, spaceTriggered, pastLastCharacter, wordCounter } = this.state;
     let activeWord = words[activeWordIndex];
+
 
     let lastLetterOfActiveWord = activeWord.substr(activeWord.length - 1);
     let lastLetterOfValue = value.substr(value.length - 1);
 
     let isLastLetterOfWord = (value[activeLetterIndex] === activeWord[activeLetterIndex])
-                              && (lastLetterOfActiveWord === lastLetterOfValue);
+    && (lastLetterOfActiveWord === lastLetterOfValue);
 
     if ( pastLastCharacter && spaceTriggered ) {
-      activeLetterIndex = 0; 
+      value = '';
+
+      if ( wordCounter === activeWordIndex && value.trim() === words[words.length - 1]) {
+        console.log('completed');
+        return false;
+      }
+
+      activeLetterIndex = 0;
       activeWordIndex++;
       spaceTriggered = false;
-      value = '';
       displayText = this.highlightWordAtIndex(activeWordIndex);
+      wordCounter++;
     } else {
       if (value[activeLetterIndex] === activeWord[activeLetterIndex]) {
         console.log('right letter')
@@ -75,17 +85,19 @@ class App extends Component {
       }
     }
 
-    this.setState({ 
+
+    this.setState({
       value,
       activeLetterIndex,
       activeWordIndex,
       displayText,
       spaceTriggered,
       pastLastCharacter,
-      words: this.state.original.split(' ')
+      words: this.state.original.split(' '),
+      wordCounter
     });
   }
-  
+
   handleBackspace(e) {
     const isBackspace = e.key === 'Backspace';
     const isSpace = e.key === ' ';
@@ -98,11 +110,16 @@ class App extends Component {
     }
   }
 
+  setCharAt(str,index,chr) {
+    if(index > str.length-1) return str;
+    return str.substr(0,index) + chr + str.substr(index+1);
+  }
+
   highlightCharacter(text = this.state.original, letterIndex, correct = false) {
     let { words, activeWordIndex } = this.state; 
     let activeWord = words[activeWordIndex];
 
-    activeWord = activeWord.replace(activeWord[letterIndex], `<span class="is-${!correct ? 'in' : ''}correct">${activeWord[letterIndex]}</span>`);
+    activeWord = this.setCharAt(activeWord, letterIndex, `<span class="is-${!correct ? 'in' : ''}correct">${activeWord[letterIndex]}</span>`)
     words[activeWordIndex] = `<span class="active-word">${activeWord}</span>`;
     return words.join(' ');
   }
